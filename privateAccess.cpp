@@ -1,5 +1,8 @@
 //
 // Created by michael.hamilton on 5/6/21.
+// I want to pass an unmutable reference (no copy) of a private vector to the outside in order to use the vector
+// but not have it be changable.
+// Auto declaration type deduction makes a copy (pass by value) by default.
 //
 
 #include <iostream>
