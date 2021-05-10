@@ -28,6 +28,8 @@ public:
         return &myVec_;
     }
 
+    // Kobi - this works, it does what you want, you expose the vector as const
+    // (btw, in most cases this is a code smell.)
     const std::vector<int>& getMyVec() const {return myVec_;}
 
 private:
@@ -52,6 +54,7 @@ int main()
     newVec.push_back(10);
 
     // These are both compiler errors
+    // Kobi - yes, constVec is constant.
 //    constVec[2] = 10;
 //    constVec.push_back(30);
 
