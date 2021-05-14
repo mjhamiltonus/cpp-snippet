@@ -20,7 +20,10 @@ public:
      * the object, making it non-usable outside after the move. It does not. It creates a copy of the variable which
      * is "moved". Can someone please reference the page in Meyers which explains this  ;-) ?
      */
-    explicit MyClass(std::vector<int> myIntVec):
+
+    // Kobi - problem is that you pass is by value, so copy will be made
+    // if you want it to be the same one, make it an rvalue ref
+    explicit MyClass(std::vector<int>&& myIntVec):
         myVec_(std::move(myIntVec))
     {
     }
@@ -43,11 +46,11 @@ int main() {
     // unique pointer to my object here isn't really relevant to this question
     std::unique_ptr<MyClass> myUpObj;
     // The move happens inside the ctor, which copies the variable? But why?
-    myUpObj = std::make_unique<MyClass>(moveMe);
+    myUpObj = std::make_unique<MyClass>(std::move(moveMe)); // Kobi - must have std::move now
     std::cout << "inside object (pre-change):" << myUpObj->addUp() << std::endl;
     // Why doesn't this freak out?  Did I not "move" this to myUpObj? CLion doesn't even complain about using something
     // after moving it.
-    moveMe[3] = 100;
+    moveMe[3] = 100; // kobi - I moved it so you will have clang-tidy error
     std::cout << "local (item 3 is 100) :" << std::accumulate(moveMe.begin(), moveMe.end(), 0) << std::endl;
     std::cout << "inside object (note item 3 not changed):" << myUpObj->addUp() << std::endl;
 
@@ -59,6 +62,12 @@ int main() {
     myUpObj2 = std::make_unique<MyClass>(std::move(moveMe2));
     std::cout << "inside object2 (pre-change):" << myUpObj2->addUp() << std::endl;
     // Clang-tidy in CLion tells me this is used after move.
+    // Kobi - yes, you cast it to rvalue & (moved it) so clang tidy will tell you this.
+    // before my ctor change above, you will invoke the std::vector ctor that accepts rvalue ref (move ctor)
+    // and it will "Still the guts of the vector". then you called std::move again since the incoming myIntVec
+    // is not lvalue, so need the cast. So clang tidy is right.
+    // My change above in the ctor is now all reference, so no copies. your std::move in the ctor body
+    // is _still_ needed
     std::cout << "local (after moved, no change) :" << std::accumulate(moveMe2.begin(), moveMe2.end(), 0) << std::endl;
 
     // This is a segfault even! But, Clang-tidy doesn't complain anymore - maybe only complains on the first one?
